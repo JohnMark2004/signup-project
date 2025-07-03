@@ -1,47 +1,164 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Signup/Login</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signup & Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      display: flex;
+      gap: 40px;
+    }
+    .form-container {
+      flex: 1;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .message {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #dff0d8;
+      color: #3c763d;
+    }
+    .error {
+      background-color: #f2dede;
+      color: #a94442;
+    }
+  </style>
 </head>
 <body>
-  <h2>Signup</h2>
-  <input id="signup-username" placeholder="Username" />
-  <input id="signup-password" type="password" placeholder="Password" />
-  <button onclick="signup()">Signup</button>
+  <div class="container">
+    <div class="form-container">
+      <h1>Signup Form</h1>
+      <form id="signupForm">
+        <input type="text" name="username" placeholder="Enter username" required minlength="3">
+        <input type="password" name="password" placeholder="Enter password" required minlength="8">
+        <button type="submit">Sign Up</button>
+      </form>
+      <div id="signupMessage" class="message" style="display: none;"></div>
+    </div>
 
-  <h2>Login</h2>
-  <input id="login-username" placeholder="Username" />
-  <input id="login-password" type="password" placeholder="Password" />
-  <button onclick="login()">Login</button>
+    <div class="form-container">
+      <h1>Login Form</h1>
+      <form id="loginForm">
+        <input type="text" name="username" placeholder="Enter username" required>
+        <input type="password" name="password" placeholder="Enter password" required>
+        <button type="submit">Login</button>
+      </form>
+      <div id="loginMessage" class="message" style="display: none;"></div>
+    </div>
+  </div>
 
   <script>
-    const backendUrl = "https://signup-project-48kk.onrender.com"; // Replace this!
-
-    async function signup() {
-      const username = document.getElementById("signup-username").value;
-      const password = document.getElementById("signup-password").value;
-
-      const res = await fetch(`${backendUrl}/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await res.json();
-      alert(data.message);
+    const API_BASE_URL = 'https://signup-project-48kk.onrender.com';
+    
+    function showMessage(elementId, message, isSuccess) {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.className = isSuccess ? 'message success' : 'message error';
+      element.style.display = 'block';
+      
+      // Hide message after 5 seconds
+      setTimeout(() => {
+        element.style.display = 'none';
+      }, 5000);
     }
 
-    async function login() {
-      const username = document.getElementById("login-username").value;
-      const password = document.getElementById("login-password").value;
+    document.getElementById("signupForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const username = e.target.username.value;
+      const password = e.target.password.value;
 
-      const res = await fetch(`${backendUrl}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await res.json();
-      alert(data.message);
-    }
+      try {
+        const res = await fetch(`${API_BASE_URL}/signup`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.message || 'Signup failed');
+        }
+
+        showMessage('signupMessage', data.message, true);
+        e.target.reset();
+      } catch (error) {
+        showMessage('signupMessage', error.message, false);
+        console.error("Signup error:", error);
+      }
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const username = e.target.username.value;
+      const password = e.target.password.value;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/login`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.message || 'Login failed');
+        }
+
+        showMessage('loginMessage', `${data.message} Welcome, ${data.user.username}!`, true);
+        e.target.reset();
+      } catch (error) {
+        showMessage('loginMessage', error.message, false);
+        console.error("Login error:", error);
+      }
+    });
   </script>
 </body>
 </html>
