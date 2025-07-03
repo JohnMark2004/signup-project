@@ -1,65 +1,68 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-require("dotenv").config();
-
+const dotenv = require("dotenv");
 const app = express();
-const PORT = process.env.PORT || 3000;
+dotenv.config();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log("✅ Connected to MongoDB"))
-.catch((err) => console.error("❌ MongoDB connection error:", err));
+const PORT = process.env.PORT || 3000;
 
-// Schema & Model
-const userSchema = new mongoose.Schema({
+// Connect to MongoDB
+mongoose
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("✅ Connected to MongoDB"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
+
+// User model
+const User = mongoose.model("User", new mongoose.Schema({
   username: String,
   password: String,
-});
-const User = mongoose.model("User", userSchema);
+}));
 
-// Routes
+// Signup route
 app.post("/signup", async (req, res) => {
-  const { username, password } = req.body;
-
   try {
+    const { username, password } = req.body;
+
     const existingUser = await User.findOne({ username });
     if (existingUser) {
-      return res.status(400).json({ message: "❌ Username already exists" });
+      return res.status(400).json({ message: "❌ User already exists" });
     }
 
     const newUser = new User({ username, password });
     await newUser.save();
-
-    res.status(201).json({ message: "✅ Signup successful" });
-  } catch (error) {
-    res.status(500).json({ message: "❌ Error saving user", error });
+    res.status(201).json({ message: "✅ User created successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "❌ Server error", error: err.message });
   }
 });
 
+// Login route
 app.post("/login", async (req, res) => {
-  const { username, password } = req.body;
-
   try {
+    const { username, password } = req.body;
+
     const user = await User.findOne({ username, password });
     if (!user) {
       return res.status(401).json({ message: "❌ Invalid credentials" });
     }
 
-    res.json({ message: "✅ Login successful" });
-  } catch (error) {
-    res.status(500).json({ message: "❌ Server error", error });
+    res.status(200).json({ message: "✅ Login successful" });
+  } catch (err) {
+    res.status(500).json({ message: "❌ Server error", error: err.message });
   }
 });
 
-// Start server
+app.get("/", (req, res) => {
+  res.send("Backend is running!");
+});
+
 app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
