@@ -1,73 +1,54 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-require("dotenv").config(); // Load .env file for MongoDB URI
+require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI, {
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
+  useUnifiedTopology: true
 })
 .then(() => console.log("✅ MongoDB connected"))
 .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// User schema & model
-const userSchema = new mongoose.Schema({
+// Mongoose model
+const User = mongoose.model("User", new mongoose.Schema({
   username: String,
-  password: String,
-});
-const User = mongoose.model("User", userSchema);
+  password: String
+}));
 
-// Test route
-app.get("/", (req, res) => {
-  res.send("🚀 Backend is running");
-});
-
-// Signup route
+// Signup
 app.post("/signup", async (req, res) => {
   const { username, password } = req.body;
+  const existingUser = await User.findOne({ username });
 
-  try {
-    const existingUser = await User.findOne({ username });
-
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
-    }
-
-    const newUser = new User({ username, password });
-    await newUser.save();
-
-    res.status(201).json({ message: "✅ User signed up successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "❌ Server error", error });
+  if (existingUser) {
+    return res.status(400).json({ message: "User already exists" });
   }
+
+  const newUser = new User({ username, password });
+  await newUser.save();
+  res.status(201).json({ message: "✅ Signup successful" });
 });
 
-// Login route
+// Login
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
+  const foundUser = await User.findOne({ username, password });
 
-  try {
-    const user = await User.findOne({ username });
-
-    if (!user || user.password !== password) {
-      return res.status(401).json({ message: "❌ Invalid credentials" });
-    }
-
-    res.status(200).json({ message: "✅ Login successful" });
-  } catch (error) {
-    res.status(500).json({ message: "❌ Server error", error });
+  if (!foundUser) {
+    return res.status(400).json({ message: "❌ Invalid credentials" });
   }
+
+  res.status(200).json({ message: "✅ Login successful" });
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
