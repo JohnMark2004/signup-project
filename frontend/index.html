@@ -23,37 +23,55 @@
 
   
   <script>
-    const backendURL = "https://signup-project-ymjk.onrender.com"; // replace with your actual URL
+  const BASE_URL = "https://your-backend.onrender.com"; // 🔁 CHANGE THIS
 
-    document.getElementById("signupForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const username = document.getElementById("signupUsername").value;
-      const password = document.getElementById("signupPassword").value;
+  // SIGN UP
+  document.getElementById("signupForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      const res = await fetch(`${backendURL}/signup`, {
+    const username = document.getElementById("signupUsername").value;
+    const password = document.getElementById("signupPassword").value;
+
+    try {
+      const response = await fetch(`${BASE_URL}/signup`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
       });
 
-      const data = await res.json();
-      alert(data.message);
-    });
+      const result = await response.json();
+      alert(result.message);
+    } catch (err) {
+      alert("Signup failed. Server error.");
+      console.error(err);
+    }
+  });
 
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const username = document.getElementById("loginUsername").value;
-      const password = document.getElementById("loginPassword").value;
+  // LOGIN
+  document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      const res = await fetch(`${backendURL}/login`, {
+    const username = document.getElementById("loginUsername").value;
+    const password = document.getElementById("loginPassword").value;
+
+    try {
+      const response = await fetch(`${BASE_URL}/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
       });
 
-      const data = await res.json();
-      alert(data.message);
-    });
-  </script>
+      const result = await response.json();
+      alert(result.message);
+    } catch (err) {
+      alert("Login failed. Server error.");
+      console.error(err);
+    }
+  });
+</script>
 </body>
 </html>
