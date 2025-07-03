@@ -1,45 +1,51 @@
+// server.js
+
+require("dotenv").config(); // Load variables from .env
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const dotenv = require("dotenv");
-const app = express();
-dotenv.config();
 
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
-
-// Connect to MongoDB
+// Connect to MongoDB using environment variable
 mongoose
-  .connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("✅ Connected to MongoDB"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) =>
+    console.error("❌ MongoDB connection error:", err.message)
+  );
 
-// User model
-const User = mongoose.model("User", new mongoose.Schema({
-  username: String,
-  password: String,
-}));
+// User schema
+const User = mongoose.model(
+  "User",
+  new mongoose.Schema({
+    username: String,
+    password: String,
+  })
+);
 
 // Signup route
 app.post("/signup", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(400).json({ message: "❌ User already exists" });
+    const existing = await User.findOne({ username });
+    if (existing) {
+      return res.status(400).json({ message: "User already exists" });
     }
 
     const newUser = new User({ username, password });
     await newUser.save();
-    res.status(201).json({ message: "✅ User created successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "❌ Server error", error: err.message });
+
+    res.status(201).json({ message: "✅ Signup successful" });
+  } catch (error) {
+    res.status(500).json({ message: "❌ Signup failed", error: error.message });
   }
 });
 
@@ -54,15 +60,17 @@ app.post("/login", async (req, res) => {
     }
 
     res.status(200).json({ message: "✅ Login successful" });
-  } catch (err) {
-    res.status(500).json({ message: "❌ Server error", error: err.message });
+  } catch (error) {
+    res.status(500).json({ message: "❌ Login failed", error: error.message });
   }
 });
 
+// Root route for testing
 app.get("/", (req, res) => {
-  res.send("Backend is running!");
+  res.send("✅ Backend is running");
 });
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server is live on http://localhost:${PORT}`);
 });
