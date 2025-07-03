@@ -6,49 +6,60 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
 })
-.then(() => console.log("✅ MongoDB connected"))
+.then(() => console.log("✅ Connected to MongoDB"))
 .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// Mongoose model
-const User = mongoose.model("User", new mongoose.Schema({
+// Schema & Model
+const userSchema = new mongoose.Schema({
   username: String,
-  password: String
-}));
+  password: String,
+});
+const User = mongoose.model("User", userSchema);
 
-// Signup
+// Routes
 app.post("/signup", async (req, res) => {
   const { username, password } = req.body;
-  const existingUser = await User.findOne({ username });
 
-  if (existingUser) {
-    return res.status(400).json({ message: "User already exists" });
+  try {
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({ message: "❌ Username already exists" });
+    }
+
+    const newUser = new User({ username, password });
+    await newUser.save();
+
+    res.status(201).json({ message: "✅ Signup successful" });
+  } catch (error) {
+    res.status(500).json({ message: "❌ Error saving user", error });
   }
-
-  const newUser = new User({ username, password });
-  await newUser.save();
-  res.status(201).json({ message: "✅ Signup successful" });
 });
 
-// Login
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  const foundUser = await User.findOne({ username, password });
 
-  if (!foundUser) {
-    return res.status(400).json({ message: "❌ Invalid credentials" });
+  try {
+    const user = await User.findOne({ username, password });
+    if (!user) {
+      return res.status(401).json({ message: "❌ Invalid credentials" });
+    }
+
+    res.json({ message: "✅ Login successful" });
+  } catch (error) {
+    res.status(500).json({ message: "❌ Server error", error });
   }
-
-  res.status(200).json({ message: "✅ Login successful" });
 });
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server is running on port ${PORT}`);
 });
